@@ -1,0 +1,25 @@
+version: '2'
+services:
+  # Notice how the service name, container name and repo directory (where the Dockerfile lives) all match.
+  transactions-api:
+    container_name: transactions-api
+    build: /vagrant/apps/transactions-api
+    restart: on-failure
+    ports:
+      # Dockerfiles should always expose 8080 by default, we map it here ot a unique port for the app
+      # which is subsequently used to expose outside of vagrant too
+      - "5014:8080"
+    volumes:
+      # Our convention is (for python) to always map the app files to /src within the container
+      - /vagrant/apps/transactions-api:/src
+    # Redirect all the logs to a logstash server. Logstash is set up to parse RFC5424 format messages.
+    logging:
+      driver: syslog
+      options:
+        syslog-format: "rfc5424"
+        syslog-address: "tcp://localhost:25826"
+        tag: "{{.Name}}"
+    # Docker-compose will ensure logstash is started before the application starts.
+    depends_on:
+      - logstash
+
